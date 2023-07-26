@@ -16,7 +16,7 @@ class ExperimentSelector(metaclass=Singleton):
         self.experiment_name_column = experiment_name_column
         self.experiment_root_paths = get_root_paths(experiments_df[experiment_name_column])
 
-    #FIXME: Devolver n_best por experimento (meter columna con el tamaño necesario de la interseccion)
+
     def select_best_experiments(self, metrics, n_best):
         best_experiments = {}
         cols_to_select = [self.experiment_name_column] + ['epochs'] + metrics
