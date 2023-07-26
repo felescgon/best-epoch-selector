@@ -1,6 +1,7 @@
 import os
 import json
 import argparse
+from datetime import datetime
 from experiments_selection.experiment_selector import ExperimentSelector
 from helpers.csv_reader import load_df_from_csv
 
@@ -46,14 +47,14 @@ def main():
 def __main_script(arguments):
     experiments = load_df_from_csv(arguments.filepath)
     experiment_selector = ExperimentSelector(experiments, arguments.experiment_name_column)
-    best_experiments = experiment_selector.select_n_best_experiments(arguments.metrics, arguments.n_best)
-    __save_selected_experiments('results', best_experiments)
+    best_experiments = experiment_selector.select_best_experiments(arguments.metrics, arguments.n_best)
+    __save_selected_experiments(f'results/{datetime.now().strftime("%Y-%m-%d-%H-%M")}/best_epochs', best_experiments, arguments.n_best)
 
-def __save_selected_experiments(path, experiments):
+def __save_selected_experiments(path, experiments, n_best):
     try:
         experiments = json.dumps(experiments, indent=4, ensure_ascii=False).encode('utf-8')
         os.makedirs(f'{path}', exist_ok=True)
-        with open(f'{path}/results.json', 'w', encoding='utf-8') as file:
+        with open(f'{path}/{n_best}_best_epochs_by_experiment.json', 'w', encoding='utf-8') as file:
             file.write(experiments.decode('utf-8'))
     except FileNotFoundError as file_not_found_error:
         print(f'Could not store the best experiments in path: {file_not_found_error.filename}. This is probably because the path is too long.')

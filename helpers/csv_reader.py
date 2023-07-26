@@ -3,7 +3,7 @@ import csv
 import pandas as pd
 
 def load_df_from_csv(filename):
-    return pd.read_csv(filename, delimiter=__detect_line_delimiter(filename))
+    return pd.read_csv(filename, delimiter=__detect_line_delimiter(filename), dtype=object)
 
 
 def __detect_line_delimiter(filename):
