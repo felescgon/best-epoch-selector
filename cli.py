@@ -118,7 +118,7 @@ def __save_selected_experiments(save_directory_path, experiments, n_best):
     try:
         experiments = json.dumps(experiments, indent=4, ensure_ascii=False).encode('utf-8')
         os.makedirs(f'{save_directory_path}', exist_ok=True)
-        with open(f'{save_directory_path}/{n_best}_best_epochs_by_experiment.json', 'w', encoding='utf-8') as file:
+        with open(f'{save_directory_path}/best_epochs/{n_best}_best_epochs_by_experiment.json', 'w', encoding='utf-8') as file:
             file.write(experiments.decode('utf-8'))
     except FileNotFoundError as file_not_found_error:
         print(f'Could not store the best experiments in path: {file_not_found_error.filename}. This is probably because the path is too long.')
