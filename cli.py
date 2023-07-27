@@ -3,6 +3,7 @@ import json
 import argparse
 from datetime import datetime
 from tqdm import tqdm
+from natsort import natsorted
 from datacentertracesdatasets import loadtraces
 from similarity_ts.metrics.metric_factory import MetricFactory
 from similarity_ts.plots.plot_factory import PlotFactory
@@ -130,12 +131,14 @@ def get_ts2s_directories(path):
         for root, _, _ in os.walk(path):
             if root.endswith('generated_data'):
                 epoch_directories.append(fix_directory(root))
-    return epoch_directories
+    return natsorted(epoch_directories)
+
 
 def fix_directory(root_path):
     path_components = os.path.normpath(root_path).split(os.sep)
     new_root_path = os.sep.join(path_components[:-1])
     return new_root_path.replace(os.path.sep, '/')
+
 
 def __save_selected_experiments(save_directory_path, experiments, n_best):
     try:
