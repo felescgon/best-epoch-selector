@@ -28,7 +28,7 @@ class TestClass(SimilarityTs):
     
 
 
-    def __process_single_ts2_item(self, item):
+    def process_single_ts2_item(self, item):
         filename, ts2 = item
         metric_object = MetricFactory.get_metric_by_name(self.similarity_ts_config.window_selection_metric)
         most_similar_ts1_sample = self.__get_most_similar_ts_sample(self.ts1_windows, ts2, metric_object)
@@ -41,9 +41,9 @@ class TestClass(SimilarityTs):
 
     def __create_ts1_ts2_associated_windows(self):
         ts1_ts2_associated_windows = {}
-        with concurrent.futures.ThreadPoolExecutor() as executor:  # Puedes cambiar ProcessPoolExecutor por ThreadPoolExecutor si prefieres hilos en lugar de procesos
+        with concurrent.futures.ProcessPoolExecutor() as executor:
             items = self.ts2_dict.items()
-            results = list(tqdm(executor.map(self.__process_single_ts2_item, items), total=len(self.ts2_dict), desc='Selecting most similar windows'))
+            results = list(tqdm(executor.map(self.process_single_ts2_item, items), total=len(self.ts2_dict), desc='Selecting most similar windows'))
         
         for filename, result in results:
             ts1_ts2_associated_windows[filename] = result
