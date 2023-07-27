@@ -1,6 +1,7 @@
 import os
 import json
 from tqdm import tqdm
+from collections import defaultdict
 from similarity_ts.similarity_ts_config import SimilarityTsConfig
 from similarity_ts.metrics.metric_config import MetricConfig
 from similarity_ts.plots.plot_config import PlotConfig
@@ -57,13 +58,17 @@ def compute_metrics(similarity_ts, save_directory_path):
     metric_computer_iterator = similarity_ts.get_metric_computer()
     tqdm_metric_computer_iterator = tqdm(metric_computer_iterator, total=len(metric_computer_iterator),
                                          desc='Computing metrics')
-    for ts2_name, metric_name, computed_metric in tqdm_metric_computer_iterator:
-        if ts2_name not in metrics_results:
-            tqdm_metric_computer_iterator.set_postfix(file=f'{ts2_name}|{metric_name}')
-            metrics_results[ts2_name] = {}
-        metrics_results[ts2_name][metric_name] = computed_metric
+    metrics_sums = defaultdict(float)
+    metrics_counts = defaultdict(int)
+    for _, metric_name, computed_metric in tqdm_metric_computer_iterator:
+        metrics_sums[metric_name] += computed_metric['Multivariate']
+        metrics_counts[metric_name] += 1
+    metrics_results = {}
+    for metric_name in metrics_sums:
+        metrics_results[metric_name] = metrics_sums[metric_name] / metrics_counts[metric_name]
     __save_metrics(json.dumps(metrics_results, indent=4, ensure_ascii=False).encode('utf-8'),
-                   path=f'{save_directory_path}/metrics')
+                   path=f'{save_directory_path}/../')
+    return metrics_results
 
 
 def __save_metrics(computed_metrics, path='results/metrics'):
