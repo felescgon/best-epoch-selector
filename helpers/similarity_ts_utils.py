@@ -56,11 +56,9 @@ def __create_directory(filename, path, plot_name):
 def compute_metrics(similarity_ts, save_directory_path):
     metrics_results = {}
     metric_computer_iterator = similarity_ts.get_metric_computer()
-    tqdm_metric_computer_iterator = tqdm(metric_computer_iterator, total=len(metric_computer_iterator),
-                                         desc='Computing metrics')
     metrics_sums = defaultdict(float)
     metrics_counts = defaultdict(int)
-    for _, metric_name, computed_metric in tqdm_metric_computer_iterator:
+    for _, metric_name, computed_metric in metric_computer_iterator:
         metrics_sums[metric_name] += computed_metric['Multivariate']
         metrics_counts[metric_name] += 1
     metrics_results = {}
