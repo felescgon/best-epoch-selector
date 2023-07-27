@@ -1,4 +1,3 @@
-import json
 import os
 import csv
 import numpy as np
@@ -38,11 +37,6 @@ def __read_header_from_csv(filename, ts_delimiter, has_header):
     return header
 
 
-def __check_headers(header_ts1, header_ts2):
-    if header_ts1 != header_ts2:
-        raise ValueError('All time series must have the same header column names.')
-
-
 def load_ts_from_csv(filename, has_header=None):
     ts_delimiter = __detect_line_delimiter(filename)
     header = __read_header_from_csv(filename, ts_delimiter, has_header)
@@ -53,7 +47,6 @@ def load_ts_from_csv(filename, has_header=None):
 def load_ts_from_path(path):
     if not os.path.exists(path):
         raise FileNotFoundError(f' Path {path} does not exist.')
-    time_series = {}
     if os.path.isfile(path):
         raise ValueError('Path must be a directory.')
     if os.path.isdir(path):
@@ -67,24 +60,3 @@ def load_ts_from_path(path):
                         ts2, _ = load_ts_from_csv(file_path, False)
                         time_series[os.path.join(root, file).replace(os.path.sep, '/')] = ts2
     return time_series
-
-
-def json_file_to_experiments_df(file):
-    with open(f'{file}/metrics/results.json', 'r', encoding='utf-8') as file:
-        json_data = json.load(file)
-    flattened_data = {key: flatten_json(value) for key, value in json_data.items()}
-    experiments_df = pd.DataFrame(flattened_data).T.reset_index()
-    experiments_df = experiments_df.rename(columns={'index': 'experiment_dir_name'})
-    experiments_df.columns = experiments_df.columns.str.replace('_Multivariate', '')
-    experiments_df['experiment_dir_name'] = experiments_df['experiment_dir_name'].apply(os.path.dirname)
-    return experiments_df
-
-def flatten_json(json_data):
-    flat_data = {}
-    for key, value in json_data.items():
-        if isinstance(value, dict):
-            for k, v in value.items():
-                flat_data[key + "_" + k] = v
-        else:
-            flat_data[key] = value
-    return flat_data

@@ -1,3 +1,4 @@
+import pandas as pd
 from helpers.csv_reader import get_experiment_tail, get_root_paths
 
 
@@ -10,26 +11,37 @@ class Singleton(type):
         return cls._instances[cls]
 
 class ExperimentSelector(metaclass=Singleton):
-    def __init__(self, experiments_df, experiment_name_column):
-        self.experiments_df = experiments_df
+    def __init__(self, experiments, experiment_name_column):
+        self.experiments_df = self.dict_to_df(experiments)
         self.experiments_df['epochs'] = self.experiments_df[experiment_name_column].apply(get_experiment_tail)
         self.experiment_name_column = experiment_name_column
-        self.experiment_root_paths = get_root_paths(experiments_df[experiment_name_column])
+        self.experiment_root_paths = get_root_paths(self.experiments_df[experiment_name_column])
+
+
+    def dict_to_df(self, experiments):
+        filas = []
+        for experiment_dir_name, metrics in experiments.items():
+            values_by_metric = {k: v for k, v in metrics.items()}
+            fila = {
+                'experiment_dir_name': experiment_dir_name,
+            }
+            fila.update(values_by_metric)
+            filas.append(fila)
+        experiments_df = pd.DataFrame(filas)
+        return experiments_df
 
 
     def select_best_experiments(self, metrics, n_best):
         best_experiments = {}
-        cols_to_select = [self.experiment_name_column] + ['epochs'] + metrics
         for experiment_root_path in self.experiment_root_paths:
             best_experiments[experiment_root_path] = {}
-            experiments_from_root = self.filter_by_root_path(cols_to_select, experiment_root_path)
+            experiments_from_root = self.filter_by_root_path(experiment_root_path)
             best_experiments[experiment_root_path] = self.get_best_experiments(metrics, n_best, experiments_from_root)
         return best_experiments
 
 
-    def filter_by_root_path(self, cols_to_select, experiment_root_path):
-        filtered_experiments = self.experiments_df[cols_to_select]
-        experiments_from_root = filtered_experiments[filtered_experiments[self.experiment_name_column].str.contains(experiment_root_path)]
+    def filter_by_root_path(self, experiment_root_path):
+        experiments_from_root = self.experiments_df[self.experiments_df[self.experiment_name_column].str.contains(experiment_root_path)]
         return experiments_from_root
 
 
