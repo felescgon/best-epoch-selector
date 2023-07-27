@@ -9,6 +9,7 @@ from similarity_ts.metrics.metric_factory import MetricFactory
 from similarity_ts.plots.plot_factory import PlotFactory
 from similarity_ts.similarity_ts import SimilarityTs
 from experiments_selection.experiment_selector import ExperimentSelector
+from experiments_selection.test_class import TestClass
 from helpers.csv_reader import load_ts_from_path
 from helpers.similarity_ts_utils import compute_metrics, create_similarity_ts_config
 
@@ -109,7 +110,7 @@ def __main_script(arguments):
         ts2_dict = load_ts_from_path(epoch_directory)
         if len(ts2_dict.values()) != 0:
             similarity_ts_config = create_similarity_ts_config(arguments, list(ts2_dict.keys()), header_ts1)
-            similarity_ts = SimilarityTs(ts1, list(ts2_dict.values()), similarity_ts_config)
+            similarity_ts = TestClass(ts1, list(ts2_dict.values()), similarity_ts_config)
             if similarity_ts_config.metric_config.metrics:
                 metric_results_by_epoch[fix_directory(epoch_directory)] = {}
                 metric_results_by_epoch[fix_directory(epoch_directory)] = compute_metrics(similarity_ts, epoch_directory)
