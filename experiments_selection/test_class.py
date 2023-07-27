@@ -1,4 +1,4 @@
-import concurrent.futures
+from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 from similarity_ts.similarity_ts import SimilarityTs
 from similarity_ts.similarity_ts_config import SimilarityTsConfig
@@ -41,7 +41,7 @@ class TestClass(SimilarityTs):
 
     def __create_ts1_ts2_associated_windows(self):
         ts1_ts2_associated_windows = {}
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with ProcessPoolExecutor(max_workers=int(ProcessPoolExecutor()._max_workers/2)) as executor:
             items = self.ts2_dict.items()
             results = list(tqdm(executor.map(self.process_single_ts2_item, items), total=len(self.ts2_dict), desc='Selecting most similar windows'))
         
