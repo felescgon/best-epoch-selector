@@ -50,7 +50,7 @@ def load_ts_from_csv(filename, has_header=None):
     return np.loadtxt(filename, delimiter=ts_delimiter, skiprows=skiprows), header
 
 
-def load_ts_from_path(path, header_ts1, has_header=None):
+def load_ts_from_path(path):
     if not os.path.exists(path):
         raise FileNotFoundError(f' Path {path} does not exist.')
     time_series = {}
@@ -64,8 +64,7 @@ def load_ts_from_path(path, header_ts1, has_header=None):
                     files = natsorted(files)
                     if file.endswith('.csv') and not file.startswith('.'):
                         file_path = os.path.join(root, file)
-                        ts2, header_ts2 = load_ts_from_csv(file_path, has_header)
-                        __check_headers(header_ts1, header_ts2)
+                        ts2, _ = load_ts_from_csv(file_path, False)
                         time_series[os.path.join(root, file).replace(os.path.sep, '/')] = ts2
     return time_series
 
