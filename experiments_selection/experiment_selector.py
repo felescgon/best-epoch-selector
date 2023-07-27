@@ -1,5 +1,5 @@
 import pandas as pd
-from helpers.csv_reader import get_experiment_tail, get_root_paths
+from helpers.reader_utils import get_experiment_tail, get_root_paths
 
 
 class Singleton(type):

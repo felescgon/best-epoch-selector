@@ -3,15 +3,13 @@ import json
 import argparse
 from datetime import datetime
 from tqdm import tqdm
-from natsort import natsorted
 from datacentertracesdatasets import loadtraces
 from similarity_ts.metrics.metric_factory import MetricFactory
 from similarity_ts.plots.plot_factory import PlotFactory
-from similarity_ts.similarity_ts import SimilarityTs
 from experiments_selection.experiment_selector import ExperimentSelector
 from experiments_selection.test_class import TestClass
-from helpers.csv_reader import load_ts_from_path
-from helpers.similarity_ts_utils import compute_metrics, create_similarity_ts_config
+from helpers.reader_utils import get_ts2s_directories, load_ts_from_path
+from helpers.similarity_ts_utils import compute_figures, create_similarity_ts_config, get_metrics_results
 
 
 def main():
@@ -105,42 +103,33 @@ def __main_script(arguments):
     ts1 = loadtraces.get_trace(trace_name=arguments.trace_name, trace_type='machine_usage', stride_seconds=300, format='ndarray')
     epoch_directories = get_ts2s_directories(arguments.time_series_2_path)
     metric_results_by_epoch = {}
-    for epoch_directory in tqdm(epoch_directories, total=len(epoch_directories), desc='Epochs'):
-        tqdm.write(f'Epoch: {epoch_directory}')
+    tqdm_epoch_iterator = tqdm(epoch_directories, total=len(epoch_directories), desc='Epochs')
+    for epoch_directory in tqdm_epoch_iterator:
+        tqdm_epoch_iterator.set_postfix(file='/'.join(epoch_directory.split(os.path.sep)[1:-1]))
         ts2_dict = load_ts_from_path(epoch_directory)
         if len(ts2_dict.values()) != 0:
             similarity_ts_config = create_similarity_ts_config(arguments, list(ts2_dict.keys()), header_ts1)
             similarity_ts = TestClass(ts1, list(ts2_dict.values()), similarity_ts_config)
             if similarity_ts_config.metric_config.metrics:
-                metric_results_by_epoch[fix_directory(epoch_directory)] = {}
-                metric_results_by_epoch[fix_directory(epoch_directory)] = compute_metrics(similarity_ts, epoch_directory)
+                metric_results_by_epoch.update(get_metrics_results(epoch_directory, similarity_ts))
         else:
             print(f'No time series found in {epoch_directory}.')
-    save_directory_folder = f'results/{datetime.now().strftime("%Y-%m-%d-%H-%M")}'
+    save_directory_folder = f'results/{datetime.now().strftime("%Y-%m-%d-%H-%M")}-{arguments.time_series_2_path}'
     experiment_selector = ExperimentSelector(metric_results_by_epoch, 'experiment_dir_name')
     best_experiments = experiment_selector.select_best_experiments(arguments.metrics_to_compare, arguments.n_best)
     __save_selected_experiments(save_directory_folder, best_experiments, arguments.n_best)
+    if similarity_ts_config.plot_config.figures:
+        best_epochs_directories = get_best_epochs_directories(best_experiments)
+        compute_figures(similarity_ts, best_epochs_directories, save_directory_folder, arguments)
 
 
-def get_ts2s_directories(path):
-    print('Looking for experiment directories...')
-    if not os.path.exists(path):
-        raise FileNotFoundError(f' Path {path} does not exist.')
-    if os.path.isfile(path):
-        raise ValueError('Path must be a directory.')
-    if os.path.isdir(path):
-        epoch_directories = []
-        for root, _, _ in os.walk(path):
-            if root.endswith('generated_data'):
-                epoch_directories.append(root)
-    return natsorted(epoch_directories)
-
-
-def fix_directory(root_path):
-    path_components = os.path.normpath(root_path).split(os.sep)
-    new_root_path = os.sep.join(path_components[:-1])
-    return new_root_path.replace(os.path.sep, '/')
-
+def get_best_epochs_directories(best_experiments):
+    directories_to_be_generated = []
+    for parent_directory in best_experiments.keys():
+        for epoch_directory in best_experiments[parent_directory]['best_epochs']:
+            directories_to_be_generated.append(os.path.join(parent_directory,epoch_directory,'generated_data'))
+    return directories_to_be_generated
+    
 
 def __save_selected_experiments(save_directory_path, experiments, n_best):
     try:

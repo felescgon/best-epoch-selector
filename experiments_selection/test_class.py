@@ -39,11 +39,12 @@ class TestClass(SimilarityTs):
             'cached_metric': cached_metric
         }
 
+
     def __create_ts1_ts2_associated_windows(self):
         ts1_ts2_associated_windows = {}
         with ProcessPoolExecutor(max_workers=int(ProcessPoolExecutor()._max_workers/2)) as executor:
             items = self.ts2_dict.items()
-            results = list(tqdm(executor.map(self.process_single_ts2_item, items), total=len(self.ts2_dict), desc='Selecting most similar windows'))
+            results = list(executor.map(self.process_single_ts2_item, items))
         
         for filename, result in results:
             ts1_ts2_associated_windows[filename] = result

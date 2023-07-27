@@ -2,10 +2,14 @@ import os
 import json
 from tqdm import tqdm
 from collections import defaultdict
+from datacentertracesdatasets import loadtraces
 from similarity_ts.similarity_ts_config import SimilarityTsConfig
 from similarity_ts.metrics.metric_config import MetricConfig
 from similarity_ts.plots.plot_config import PlotConfig
 from similarity_ts.plots.plot_factory import PlotFactory
+from experiments_selection.test_class import TestClass
+
+from helpers.reader_utils import get_epoch_parent_path, load_ts_from_path
 
 
 def create_similarity_ts_config(arguments, ts2_names, header_names):
@@ -22,19 +26,23 @@ def create_similarity_ts_config(arguments, ts2_names, header_names):
                               header_names)
 
 
-def compute_figures(similarity_ts, save_directory_path):
-    plot_computer_iterator = similarity_ts.get_plot_computer()
-    tqdm_plot_computer_iterator = tqdm(plot_computer_iterator, total=len(plot_computer_iterator),
-                                       desc='Computing plots  ', dynamic_ncols=True)
-    for ts2_name, plot_name, generated_plots in tqdm_plot_computer_iterator:
-        tqdm_plot_computer_iterator.set_postfix(file=f'{ts2_name}|{plot_name}')
-        __save_figures(ts2_name, plot_name, generated_plots, path=save_directory_path)
+def compute_figures(similarity_ts, best_epochs_directories, save_directory_path, arguments):
+    header_ts1 = tuple(loadtraces.get_trace(trace_name=arguments.trace_name, trace_type='machine_usage', stride_seconds=300).columns.to_list())
+    ts1 = loadtraces.get_trace(trace_name=arguments.trace_name, trace_type='machine_usage', stride_seconds=300, format='ndarray')
+    tqdm_epoch_iterator = tqdm(best_epochs_directories, total=len(best_epochs_directories), desc='Figures')
+    for epoch_directory in tqdm_epoch_iterator:
+        tqdm_epoch_iterator.set_postfix(file='/'.join(epoch_directory.split(os.path.sep)[1:-1]))
+        ts2_dict = load_ts_from_path(epoch_directory)
+        similarity_ts_config = create_similarity_ts_config(arguments, list(ts2_dict.keys()), header_ts1)
+        similarity_ts = TestClass(ts1, list(ts2_dict.values()), similarity_ts_config)
+        for ts2_name, plot_name, generated_plots in similarity_ts.get_plot_computer():
+            __save_figures(ts2_name, plot_name, generated_plots, save_directory_path)
 
 
 def __save_figures(filename, plot_name, generated_plots, path='results/figures'):
     for plot in generated_plots:
         try:
-            dir_path = __create_directory(filename, f'{path}/figures', plot_name)
+            dir_path = __create_directory('/'.join(filename.split('/')[1:]), f'{path}/figures', plot_name)
             plot[0].savefig(f'{dir_path}{plot[0].axes[0].get_title()}.pdf', format='pdf', bbox_inches='tight')
         except FileNotFoundError as file_not_found_error:
             print(f'Could not create the figure in path: {file_not_found_error.filename}. This is probably because the path is too long.')
@@ -76,3 +84,18 @@ def __save_metrics(computed_metrics, path='results/metrics'):
             file.write(computed_metrics.decode('utf-8'))
     except FileNotFoundError as file_not_found_error:
         print(f'Could not store the metrics in path: {file_not_found_error.filename}. This is probably because the path is too long.')
+
+def get_metrics_results(epoch_directory, similarity_ts):
+    metric_results_by_epoch = {}
+    metric_results_by_epoch[get_epoch_parent_path(epoch_directory)] = {}
+    if os.path.exists(f'{get_epoch_parent_path(epoch_directory)}/results.json'):
+        with open(f'{get_epoch_parent_path(epoch_directory)}/results.json', 'r', encoding='utf-8') as results:
+            metrics_results = json.load(results)
+            if set(similarity_ts.similarity_ts_config.metric_config.metrics).issubset(set(metrics_results.keys())):
+                metric_results_by_epoch[get_epoch_parent_path(epoch_directory)] = metrics_results
+                print(f'\nEpoch {os.path.basename(get_epoch_parent_path(epoch_directory))} already computed. Skipping...')
+            else:
+                metric_results_by_epoch[get_epoch_parent_path(epoch_directory)] = compute_metrics(similarity_ts, epoch_directory)
+    else:
+        metric_results_by_epoch[get_epoch_parent_path(epoch_directory)] = compute_metrics(similarity_ts, epoch_directory)
+    return metric_results_by_epoch

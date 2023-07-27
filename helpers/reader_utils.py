@@ -60,3 +60,23 @@ def load_ts_from_path(path):
                         ts2, _ = load_ts_from_csv(file_path, False)
                         time_series[os.path.join(root, file).replace(os.path.sep, '/')] = ts2
     return time_series
+
+
+def get_ts2s_directories(path):
+    print('Looking for experiment directories...')
+    if not os.path.exists(path):
+        raise FileNotFoundError(f' Path {path} does not exist.')
+    if os.path.isfile(path):
+        raise ValueError('Path must be a directory.')
+    if os.path.isdir(path):
+        epoch_directories = []
+        for root, _, _ in os.walk(path):
+            if root.endswith('generated_data'):
+                epoch_directories.append(root)
+    return natsorted(epoch_directories)
+
+
+def get_epoch_parent_path(root_path):
+    path_components = os.path.normpath(root_path).split(os.sep)
+    new_root_path = os.sep.join(path_components[:-1])
+    return new_root_path.replace(os.path.sep, '/')
