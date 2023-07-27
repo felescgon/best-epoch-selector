@@ -100,7 +100,7 @@ def main():
 def __main_script(arguments):
     header_ts1 = tuple(loadtraces.get_trace(trace_name=arguments.trace_name, trace_type='machine_usage', stride_seconds=300).columns.to_list())
     ts1 = loadtraces.get_trace(trace_name=arguments.trace_name, trace_type='machine_usage', stride_seconds=300, format='ndarray')
-    ts2_dict = load_ts_from_path(arguments.time_series_2_path, header_ts1, arguments.header)
+    ts2_dict = load_ts_from_path(arguments.time_series_2_path)
     similarity_ts_config = create_similarity_ts_config(arguments, list(ts2_dict.keys()), header_ts1)
     similarity_ts = SimilarityTs(ts1, list(ts2_dict.values()), similarity_ts_config)
     save_directory_folder = f'results/{datetime.now().strftime("%Y-%m-%d-%H-%M")}'
