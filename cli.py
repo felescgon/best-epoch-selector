@@ -111,8 +111,8 @@ def __main_script(arguments):
             similarity_ts_config = create_similarity_ts_config(arguments, list(ts2_dict.keys()), header_ts1)
             similarity_ts = SimilarityTs(ts1, list(ts2_dict.values()), similarity_ts_config)
             if similarity_ts_config.metric_config.metrics:
-                metric_results_by_epoch[epoch_directory] = {}
-                metric_results_by_epoch[epoch_directory] = compute_metrics(similarity_ts, epoch_directory)
+                metric_results_by_epoch[fix_directory(epoch_directory)] = {}
+                metric_results_by_epoch[fix_directory(epoch_directory)] = compute_metrics(similarity_ts, epoch_directory)
         else:
             print(f'No time series found in {epoch_directory}.')
     save_directory_folder = f'results/{datetime.now().strftime("%Y-%m-%d-%H-%M")}'
@@ -122,6 +122,7 @@ def __main_script(arguments):
 
 
 def get_ts2s_directories(path):
+    print('Looking for experiment directories...')
     if not os.path.exists(path):
         raise FileNotFoundError(f' Path {path} does not exist.')
     if os.path.isfile(path):
@@ -130,7 +131,7 @@ def get_ts2s_directories(path):
         epoch_directories = []
         for root, _, _ in os.walk(path):
             if root.endswith('generated_data'):
-                epoch_directories.append(fix_directory(root))
+                epoch_directories.append(root)
     return natsorted(epoch_directories)
 
 
