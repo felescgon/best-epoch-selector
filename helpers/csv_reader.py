@@ -52,22 +52,21 @@ def load_ts_from_csv(filename, has_header=None):
 
 def load_ts_from_path(path, header_ts1, has_header=None):
     if not os.path.exists(path):
-        raise FileNotFoundError(f' Path {path} does not exist')
+        raise FileNotFoundError(f' Path {path} does not exist.')
     time_series = {}
     if os.path.isfile(path):
-        ts2, header_ts2 = load_ts_from_csv(path, has_header)
-        __check_headers(header_ts1, header_ts2)
-        time_series[os.path.basename(path)] = ts2
-    elif os.path.isdir(path):
+        raise ValueError('Path must be a directory.')
+    if os.path.isdir(path):
         time_series = {}
         for root, _, files in os.walk(path):
-            for file in files:
-                files = natsorted(files)
-                if file.endswith('.csv') and not file.startswith('.'):
-                    file_path = os.path.join(root, file)
-                    ts2, header_ts2 = load_ts_from_csv(file_path, has_header)
-                    __check_headers(header_ts1, header_ts2)
-                    time_series[os.path.join(root, file).replace(os.path.sep, '/')] = ts2
+            if root.endswith('generated_data'):
+                for file in files:
+                    files = natsorted(files)
+                    if file.endswith('.csv') and not file.startswith('.'):
+                        file_path = os.path.join(root, file)
+                        ts2, header_ts2 = load_ts_from_csv(file_path, has_header)
+                        __check_headers(header_ts1, header_ts2)
+                        time_series[os.path.join(root, file).replace(os.path.sep, '/')] = ts2
     return time_series
 
 
