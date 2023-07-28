@@ -21,7 +21,7 @@ class ExperimentSelector(metaclass=Singleton):
     def dict_to_df(self, experiments):
         filas = []
         for experiment_dir_name, metrics in experiments.items():
-            values_by_metric = {k: v for k, v in metrics.items()}
+            values_by_metric = {k: v for k, v in metrics['Aggregated'].items()}
             fila = {
                 'experiment_dir_name': experiment_dir_name,
             }

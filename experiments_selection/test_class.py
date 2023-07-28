@@ -1,9 +1,9 @@
 from concurrent.futures import ProcessPoolExecutor
-from tqdm import tqdm
 from similarity_ts.similarity_ts import SimilarityTs
 from similarity_ts.similarity_ts_config import SimilarityTsConfig
 from similarity_ts.metrics.metric_factory import MetricFactory
 from similarity_ts.plots.plot_factory import PlotFactory
+from similarity_ts.plots.plot_computer import PlotComputer
 from similarity_ts.helpers.window_sampler import split_ts_strided
 
 class TestClass(SimilarityTs):
@@ -52,7 +52,6 @@ class TestClass(SimilarityTs):
         return ts1_ts2_associated_windows
 
 
-
     def __get_most_similar_ts_sample(self, ts1_windows, ts2, metric_object):
         current_best = float('inf')
         most_similar_sample = []
@@ -62,3 +61,8 @@ class TestClass(SimilarityTs):
                 current_best = current_distance
                 most_similar_sample = ts1_window
         return most_similar_sample
+
+
+    def get_plot_computer(self):
+        plots_to_be_generated = [plot for plot in self.plot_factory.plots_to_be_generated if plot.name in self.similarity_ts_config.plot_config.figures]
+        return PlotComputer(self, plots_to_be_generated)
