@@ -6,7 +6,7 @@ from similarity_ts.plots.plot_factory import PlotFactory
 from similarity_ts.plots.plot_computer import PlotComputer
 from similarity_ts.helpers.window_sampler import split_ts_strided
 
-class TestClass(SimilarityTs):
+class SimilarityCopy(SimilarityTs):
     def __init__(self, ts1, ts2s, similarity_ts_config=None):
         self.ts1 = ts1
         self.ts2s = ts2s
@@ -26,7 +26,6 @@ class TestClass(SimilarityTs):
         ts2_filenames = ts2_filenames if ts2_filenames is not None else ['ts2_' + str(i) for i in range(len(ts2s))]
         return {ts2_name: ts2 for ts2, ts2_name in zip(ts2s, ts2_filenames)}
     
-
 
     def process_single_ts2_item(self, item):
         filename, ts2 = item

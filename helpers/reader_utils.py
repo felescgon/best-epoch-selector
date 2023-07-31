@@ -1,11 +1,8 @@
 import os
 import csv
+import json
 import numpy as np
-import pandas as pd
 from natsort import natsorted
-
-def load_df_from_csv(filename):
-    return pd.read_csv(filename, delimiter=__detect_line_delimiter(filename), dtype=object)
 
 
 def __detect_line_delimiter(filename):
@@ -80,3 +77,24 @@ def get_epoch_parent_path(root_path):
     path_components = os.path.normpath(root_path).split(os.sep)
     new_root_path = os.sep.join(path_components[:-1])
     return new_root_path.replace(os.path.sep, '/')
+
+
+def get_best_epochs_directories(best_experiments):
+    directories_to_be_generated = []
+    for parent_directory in best_experiments.keys():
+        for epoch_directory in best_experiments[parent_directory]['best_epochs']:
+            directories_to_be_generated.append(os.path.join(parent_directory, epoch_directory, 'generated_data'))
+    return directories_to_be_generated
+
+
+def get_best_sample_names(epoch_directory, n_best, window_selection_metric):
+    with open(f'{epoch_directory}/../results.json', 'r', encoding='utf-8') as results_file:
+        epoch_directory_results = json.load(results_file)
+    return __get_top_n_files(epoch_directory_results['Individual'], window_selection_metric, n_best)
+
+
+def __get_top_n_files(dictionary, parameter, n):
+    sorted_files = sorted(dictionary.items(), key=lambda x: x[1][parameter]['Multivariate'])
+    top_n_files = sorted_files[:n]
+    file_names = [file[0] for file in top_n_files]
+    return file_names
