@@ -51,12 +51,12 @@ def __save_figures(filename, plot_name, generated_plots, path='results/figures')
 
 def __create_figures_directory(filename, path, plot_name):
     try:
+        parent_directory = os.path.splitext(filename)[0].split('/')
+        epochs_directory = f'{"-".join(parent_directory[:-3])}/{parent_directory[-3]}'
         if plot_name in PlotFactory.get_instance().figures_requires_all_samples:
-            original_filename = '-'.join(os.path.splitext(filename)[0].split('/')[:-2])
-            dir_path = f'{path}/{original_filename}/{plot_name}/'
+            dir_path = f'{path}/{epochs_directory}/{plot_name}/'
         else:
-            parent_filename = '-'.join(os.path.splitext(filename)[0].split('/')[:-2])
-            original_filename = os.path.join(parent_filename, os.path.splitext(filename)[0].split('/')[-1])
+            original_filename = os.path.join(epochs_directory, os.path.splitext(filename)[0].split('/')[-1])
             dir_path = f'{path}/{original_filename}/{plot_name}/'
         os.makedirs(dir_path, exist_ok=True)
     except FileNotFoundError as file_not_found_error:

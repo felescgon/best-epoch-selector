@@ -1,3 +1,4 @@
+import os
 import argparse
 from datetime import datetime
 from datacentertracesdatasets import loadtraces
@@ -108,7 +109,7 @@ def __main_script(arguments):
     ts1 = loadtraces.get_trace(trace_name=arguments.trace_name, trace_type='machine_usage', stride_seconds=300, format='ndarray')
     epoch_directories = get_ts2s_directories(arguments.time_series_2_path)
     metric_results_by_epoch = compute_metrics(arguments, header_ts1, ts1, epoch_directories)
-    save_directory_folder = f'results/{datetime.now().strftime("%Y-%m-%d-%H-%M")}-{arguments.time_series_2_path}'
+    save_directory_folder = f'{os.path.abspath(arguments.time_series_2_path)}/results/{datetime.now().strftime("%Y-%m-%d-%H-%M")}'
     experiment_selector = BestEpochsSelector(metric_results_by_epoch, 'experiment_dir_name')
     best_experiments = experiment_selector.select_best_epochs(arguments.metrics_to_compare, arguments.n_best)
     save_selected_experiments(save_directory_folder, best_experiments, arguments.n_best)
