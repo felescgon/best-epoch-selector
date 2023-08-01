@@ -59,8 +59,8 @@ class BestEpochsSelector():
             mid_i = (left_i + right_i) // 2
             best_epochs = self.__pick_top_epochs(experiments_sorted_by_metrics, mid_i)
             best_epochs_intersection = list(set.intersection(*best_epochs))
-            best_epochs_intersection_data = {'best_epochs': best_epochs_intersection,
-                                        'epochs_used_in_intersection': {epoch: 0 for epoch in best_epochs_intersection},
+            best_epochs_intersection_data = {'best_epochs': {epoch: 0 for epoch in best_epochs_intersection},
+                                        'epochs_used_in_intersection': [list(best_epochs) for best_epochs in best_epochs],
                                         'intersection_epochs_n': mid_i}
             if len(best_epochs_intersection_data['best_epochs']) == n_best:
                 break
@@ -85,5 +85,5 @@ class BestEpochsSelector():
             if current_epoch in best_epochs_intersection['best_epochs']:
                 with open(f'{epoch_file}/results.json', 'r', encoding='utf-8') as results:
                     metrics_results = json.load(results)['Aggregated']
-                    best_epochs_intersection['epochs_used_in_intersection'][current_epoch] = metrics_results
+                    best_epochs_intersection['best_epochs'][current_epoch] = metrics_results
         return best_epochs_intersection
