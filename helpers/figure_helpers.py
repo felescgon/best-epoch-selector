@@ -3,12 +3,13 @@ import copy
 from tqdm import tqdm
 from datacentertracesdatasets import loadtraces
 from similarity_ts.plots.plot_factory import PlotFactory
-from experiments_selection.similarity_copy import SimilarityCopy
+from epoch_selection.similarity_copy import SimilarityCopy
 from helpers.reader_utils import get_best_sample_names, load_ts_from_path,load_ts_from_csv
 from helpers.similarity_ts_utils import create_similarity_ts_config
 
 
-def compute_figures(best_epochs_directories, save_directory_path, arguments):
+def generate_figures(best_epochs_directories, save_directory_path, arguments):
+    print('Generating figures...')
     header_ts1 = tuple(loadtraces.get_trace(trace_name=arguments.trace_name, trace_type='machine_usage', stride_seconds=300).columns.to_list())
     ts1 = loadtraces.get_trace(trace_name=arguments.trace_name, trace_type='machine_usage', stride_seconds=300, format='ndarray')
     tqdm_epoch_iterator = tqdm(best_epochs_directories, total=len(best_epochs_directories), desc='Figures')

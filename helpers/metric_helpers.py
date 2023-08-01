@@ -2,18 +2,24 @@ import os
 import json
 from collections import defaultdict
 from tqdm import tqdm
-from experiments_selection.similarity_copy import SimilarityCopy
-from helpers.reader_utils import get_epoch_parent_path, load_ts_from_path
+from epoch_selection.best_epochs_selector import BestEpochsSelector
+from epoch_selection.similarity_copy import SimilarityCopy
+from helpers.reader_utils import get_epoch_parent_path, get_epochs_from_experiment, load_ts_from_path
 from helpers.similarity_ts_utils import create_similarity_ts_config
 
 
-def compute_metrics(arguments, header_ts1, ts1, epoch_directories):
-    metric_results_by_epoch = {}
-    tqdm_epoch_iterator = tqdm(epoch_directories, total=len(epoch_directories), desc='Epochs')
-    for epoch_directory in tqdm_epoch_iterator:
-        tqdm_epoch_iterator.set_postfix(file='/'.join(epoch_directory.split(os.path.sep)[1:-1]))
-        metric_results_by_epoch.update(__get_metrics_results_by_epoch(arguments, header_ts1, ts1, epoch_directory))
-    return metric_results_by_epoch
+def compute_metrics(arguments, header_ts1, ts1, experiment_directories, save_directory_folder):
+    print('Computing metrics...')
+    for experiment_directory in experiment_directories:
+        metric_results_by_epoch = {}
+        epoch_directories = get_epochs_from_experiment(experiment_directory)
+        tqdm_epoch_iterator = tqdm(epoch_directories, total=len(epoch_directories), desc=experiment_directory)
+        for epoch_directory in tqdm_epoch_iterator:
+            tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split())
+            metric_results_by_epoch.update(__get_metrics_results_by_epoch(arguments, header_ts1, ts1, epoch_directory))
+        experiment_selector = BestEpochsSelector(metric_results_by_epoch, 'experiment_dir_name')
+        best_experiments = experiment_selector.select_best_epochs(arguments.metrics_to_compare, arguments.n_best)
+        __save_selected_experiments(save_directory_folder, best_experiments, arguments.n_best)
 
 
 def __get_metrics_results_by_epoch(arguments, header_ts1, ts1, epoch_directory):
@@ -86,11 +92,18 @@ def __save_metrics(computed_metrics, path='results/metrics'):
         print(f'Could not store the metrics in path: {file_not_found_error.filename}. This is probably because the path is too long.')
 
 
-def save_selected_experiments(save_directory_path, experiments, n_best):
+def __save_selected_experiments(save_directory_path, experiments, n_best):
     try:
-        experiments = json.dumps(experiments, indent=4, ensure_ascii=False).encode('utf-8')
-        os.makedirs(f'{save_directory_path}', exist_ok=True)
-        with open(f'{save_directory_path}/{n_best}_epochs_by_experiment.json', 'w', encoding='utf-8') as file:
-            file.write(experiments.decode('utf-8'))
+        save_file_path = f'{save_directory_path}/{n_best}_epochs_by_experiment.json'
+        experiments_to_save = json.dumps(experiments, indent=4, ensure_ascii=False).encode('utf-8')
+        if os.path.exists(f'{save_directory_path}'):
+            with open(save_file_path, 'r', encoding='utf-8') as file:
+                already_saved_experiments = json.load(file)
+                already_saved_experiments.update(experiments)
+                experiments_to_save = json.dumps(already_saved_experiments, indent=4, ensure_ascii=False).encode('utf-8')
+        else:
+            os.makedirs(f'{save_directory_path}', exist_ok=True)
+        with open(save_file_path, 'w', encoding='utf-8') as file:
+            file.write(experiments_to_save.decode('utf-8'))
     except FileNotFoundError as file_not_found_error:
         print(f'Could not store the best experiments in path: {file_not_found_error.filename}. This is probably because the path is too long.')

@@ -66,11 +66,19 @@ def get_ts2s_directories(path):
     if os.path.isfile(path):
         raise ValueError('Path must be a directory.')
     if os.path.isdir(path):
-        epoch_directories = []
+        experiment_directories = set()
         for root, _, _ in os.walk(path):
             if root.endswith('generated_data'):
-                epoch_directories.append(root)
-    return natsorted(epoch_directories)
+                experiment_directories.add(os.path.sep.join(root.split(os.path.sep)[:-2]))
+    return natsorted(list(experiment_directories))
+
+
+def get_epochs_from_experiment(path):
+    epoch_directories = []
+    for root, _, _ in os.walk(path):
+        if root.endswith('generated_data'):
+            epoch_directories.append(root)
+    return epoch_directories
 
 
 def get_epoch_parent_path(root_path):
@@ -98,3 +106,9 @@ def __get_top_n_files(dictionary, parameter, n):
     top_n_files = sorted_files[:n]
     file_names = [file[0] for file in top_n_files]
     return file_names
+
+
+def load_best_experiments_file(save_directory_path, n_best):
+    with open(f'{save_directory_path}/{n_best}_epochs_by_experiment.json', 'r', encoding='utf-8') as best_experiments_file:
+        best_experiments = json.load(best_experiments_file)
+    return best_experiments
