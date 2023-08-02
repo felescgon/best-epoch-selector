@@ -30,15 +30,16 @@ def __generate_figures_requires_all_samples(save_directory_path, arguments, head
 
 
 def __generate_figures_by_filename(save_directory_path, arguments, header_ts1, ts1, epoch_directory):
-    top_n_files = get_best_sample_names(epoch_directory, arguments.n_best, arguments.window_selection_metric)
-    for filename in top_n_files:
-        ts2 = load_ts_from_csv(filename, False)
-        arguments_copy = copy.deepcopy(arguments)
-        arguments_copy.figures = [plot for plot in arguments.figures if plot not in PlotFactory.get_instance().figures_requires_all_samples]
-        similarity_ts_config = create_similarity_ts_config(arguments_copy, [filename], header_ts1)
-        similarity_ts = SimilarityCopy(ts1, ts2, similarity_ts_config)
-        for ts2_name, plot_name, generated_plots in similarity_ts.get_plot_computer():
-            __save_figures(ts2_name, plot_name, generated_plots, save_directory_path)
+    arguments_copy = copy.deepcopy(arguments)
+    arguments_copy.figures = [plot for plot in arguments.figures if plot not in PlotFactory.get_instance().figures_requires_all_samples]
+    if arguments_copy.figures:
+        top_n_files = get_best_sample_names(epoch_directory, arguments.n_best, arguments.window_selection_metric)
+        for filename in top_n_files:
+            ts2 = load_ts_from_csv(filename, False)
+            similarity_ts_config = create_similarity_ts_config(arguments_copy, [filename], header_ts1)
+            similarity_ts = SimilarityCopy(ts1, ts2, similarity_ts_config)
+            for ts2_name, plot_name, generated_plots in similarity_ts.get_plot_computer():
+                __save_figures(ts2_name, plot_name, generated_plots, save_directory_path)
 
 
 def __save_figures(filename, plot_name, generated_plots, path='results/figures'):

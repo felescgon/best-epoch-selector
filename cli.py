@@ -34,7 +34,7 @@ def main():
         nargs='+',
         help='<Optional> Include metrics to be computed as a list separated by spaces.',
         choices=available_metrics,
-        required=False,
+        required=True,
     )
     parser.add_argument(
         '-f',

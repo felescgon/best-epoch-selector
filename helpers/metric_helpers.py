@@ -46,23 +46,15 @@ def __compute_metrics_by_epoch(arguments, header_ts1, ts1, metric_results_by_epo
         similarity_ts_config = create_similarity_ts_config(arguments, list(ts2_dict.keys()), header_ts1)
         similarity_ts = SimilarityCopy(ts1, list(ts2_dict.values()), similarity_ts_config)
         if similarity_ts_config.metric_config.metrics:
-            metric_results_by_epoch.update(__get_metrics_results_by_samples(epoch_directory, similarity_ts, arguments.recompute_metrics))
+            metric_results_by_epoch.update(__get_metrics_results_by_samples(epoch_directory, similarity_ts))
     else:
         print(f'No time series found in {epoch_directory}.')
 
 
-def __get_metrics_results_by_samples(epoch_directory, similarity_ts, recompute_metrics):
+def __get_metrics_results_by_samples(epoch_directory, similarity_ts):
     metric_results_by_samples = {}
     metric_results_by_samples[get_epoch_parent_path(epoch_directory)] = {}
-    if not recompute_metrics and os.path.exists(f'{get_epoch_parent_path(epoch_directory)}/results.json'):
-        with open(f'{get_epoch_parent_path(epoch_directory)}/results.json', 'r', encoding='utf-8') as results:
-            metrics_results = json.load(results)
-            if set(similarity_ts.similarity_ts_config.metric_config.metrics).issubset(set(metrics_results['Aggregated'].keys())):
-                metric_results_by_samples[get_epoch_parent_path(epoch_directory)] = metrics_results
-            else:
-                metric_results_by_samples[get_epoch_parent_path(epoch_directory)] = __compute_metrics_by_samples(similarity_ts, epoch_directory)
-    else:
-        metric_results_by_samples[get_epoch_parent_path(epoch_directory)] = __compute_metrics_by_samples(similarity_ts, epoch_directory)
+    metric_results_by_samples[get_epoch_parent_path(epoch_directory)] = __compute_metrics_by_samples(similarity_ts, epoch_directory)
     return metric_results_by_samples
 
 
