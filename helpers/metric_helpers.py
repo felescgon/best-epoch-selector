@@ -15,7 +15,7 @@ def compute_metrics(arguments, header_ts1, ts1, experiment_directories, save_dir
     for experiment_directory in experiment_directories:
         metric_results_by_epoch = {}
         epoch_directories = get_epochs_from_experiment(experiment_directory)
-        tqdm_epoch_iterator = tqdm(epoch_directories, total=len(epoch_directories), desc=experiment_directory)
+        tqdm_epoch_iterator = tqdm(epoch_directories, total=len(epoch_directories), desc=experiment_directory.split(os.path.sep)[-2].split()[0])
         for epoch_directory in tqdm_epoch_iterator:
             tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split()[0], status='Computing...')
             metric_results_by_epoch.update(__get_metrics_results_by_epoch(arguments, header_ts1, ts1, epoch_directory, tqdm_epoch_iterator))
