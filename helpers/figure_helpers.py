@@ -54,7 +54,7 @@ def __save_figures(filename, plot_name, generated_plots, path='results/figures')
 def __create_figures_directory(filename, path, plot_name):
     try:
         parent_directory = os.path.splitext(filename)[0].split('/')
-        epochs_directory = f'{"-".join(parent_directory[:-3])}/{parent_directory[-3]}'
+        epochs_directory = f'{parent_directory[-5]}/{parent_directory[-3]}'
         if plot_name in PlotFactory.get_instance().figures_requires_all_samples:
             dir_path = f'{path}/{epochs_directory}/{plot_name}/'
         else:
