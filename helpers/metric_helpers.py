@@ -81,11 +81,11 @@ def __compute_metrics_by_samples(similarity_ts, save_directory_path):
     for metric_name in metrics_sums:
         metrics_results_by_samples["Aggregated"][metric_name] = metrics_sums[metric_name] / metrics_counts[metric_name]
     __save_metrics(json.dumps(metrics_results_by_samples, indent=4, ensure_ascii=False).encode('utf-8'),
-                   path=f'{save_directory_path}/../')
+                   path=f'{os.path.dirname(save_directory_path)}')
     return metrics_results_by_samples
 
 
-def __save_metrics(computed_metrics, path='results/metrics'):
+def __save_metrics(computed_metrics, path):
     try:
         os.makedirs(f'{path}', exist_ok=True)
         with open(f'{path}/results.json', 'w', encoding='utf-8') as file:
