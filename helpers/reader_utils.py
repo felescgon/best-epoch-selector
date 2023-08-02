@@ -91,7 +91,7 @@ def get_best_epochs_directories(best_experiments):
     directories_to_be_generated = []
     for parent_directory in best_experiments.keys():
         for epoch_directory in best_experiments[parent_directory]['best_epochs']:
-            directories_to_be_generated.append(os.path.join(parent_directory, epoch_directory, 'generated_data'))
+            directories_to_be_generated.append(os.path.join(parent_directory, epoch_directory, 'generated_data').replace(os.path.sep, '/'))
     return directories_to_be_generated
 
 

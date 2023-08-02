@@ -14,7 +14,7 @@ def generate_figures(best_epochs_directories, save_directory_path, arguments):
     ts1 = loadtraces.get_trace(trace_name=arguments.trace_name, trace_type='machine_usage', stride_seconds=300, format='ndarray')
     tqdm_epoch_iterator = tqdm(best_epochs_directories, total=len(best_epochs_directories), desc='Figures')
     for epoch_directory in tqdm_epoch_iterator:
-        tqdm_epoch_iterator.set_postfix(file='/'.join(epoch_directory.split(os.path.sep)[1:-1]))
+        tqdm_epoch_iterator.set_postfix(experiment='/'.join(epoch_directory.split('/')[-4:-1]))
         ts2_dict = load_ts_from_path(epoch_directory)
         __generate_figures_requires_all_samples(save_directory_path, arguments, header_ts1, ts1, ts2_dict)
         __generate_figures_by_filename(save_directory_path, arguments, header_ts1, ts1, epoch_directory)
