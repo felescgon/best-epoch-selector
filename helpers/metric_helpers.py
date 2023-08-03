@@ -129,7 +129,7 @@ def __write_experiments_to_csv(file_path, json_file_path):
         experiments = json.load(json_file)
     with open(file_path, 'w', newline='', encoding='utf-8') as csv_file:
         field_names = ['experiment'] + ['epoch'] + __get_metrics(experiments) + [key for key in list(experiments.values())[0] if key not in ['best_epochs']]
-        writer = csv.DictWriter(csv_file, fieldnames=field_names)
+        writer = csv.DictWriter(csv_file, fieldnames=field_names, delimiter=';')
         writer.writeheader()
         for experiment_name, experiment_data in experiments.items():
             row_data = {}
