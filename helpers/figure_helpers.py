@@ -43,10 +43,10 @@ def __generate_figures_by_filename(save_directory_path, arguments, header_ts1, t
                 __save_figures(ts2_name, plot_name, generated_plots, save_directory_path)
 
 
-def __save_figures(filename, plot_name, generated_plots, path='results/figures'):
+def __save_figures(filename, plot_name, generated_plots, path):
     for plot in generated_plots:
         try:
-            dir_path = __create_figures_directory('/'.join(filename.split('/')[1:]), f'{path}/figures', plot_name)
+            dir_path = __create_figures_directory(filename, f'{path}/figures', plot_name)
             plot[0].savefig(f'{dir_path}{plot[0].axes[0].get_title()}.pdf', format='pdf', bbox_inches='tight')
         except FileNotFoundError as file_not_found_error:
             print(f'Could not create the figure in path: {file_not_found_error.filename}. This is probably because the path is too long.')
@@ -54,7 +54,7 @@ def __save_figures(filename, plot_name, generated_plots, path='results/figures')
 
 def __create_figures_directory(filename, path, plot_name):
     try:
-        parent_directory = os.path.splitext(filename)[0].split('/')
+        parent_directory = os.path.splitext(os.path.abspath(filename))[0].split(os.sep)
         results_parent_directory_index = parent_directory.index('/'.join(os.path.splitext(path)[0].split(os.sep)).split('/')[-4])
         epochs_directory = f'{parent_directory[results_parent_directory_index+1]}/{parent_directory[__find_epoch_directory_index(parent_directory)]}'
         if plot_name in PlotFactory.get_instance().figures_requires_all_samples:

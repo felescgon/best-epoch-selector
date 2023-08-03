@@ -128,9 +128,31 @@ def __write_experiments_to_csv(file_path, json_file_path):
     with open(json_file_path, 'r', newline='', encoding='utf-8') as json_file:
         experiments = json.load(json_file)
     with open(file_path, 'w', newline='', encoding='utf-8') as csv_file:
-        field_names = ['experiment'] + list(set(key for nested_dict in experiments.values() for key in nested_dict.keys()))
+        field_names = ['experiment'] + ['epoch'] + __get_metrics(experiments) + [key for key in list(experiments.values())[0] if key not in ['best_epochs']]
         writer = csv.DictWriter(csv_file, fieldnames=field_names)
         writer.writeheader()
-        for key, nested_dict in experiments.items():
-            row_data = {'experiment': key, **nested_dict}
-            writer.writerow(row_data)
+        for experiment_name, experiment_data in experiments.items():
+            row_data = {}
+            row_data['experiment'] = experiment_name
+            row_data.update({column: experiment_data[column] for column in experiment_data.keys() if not isinstance(experiment_data[column], dict)})
+            for best_epoch, metric_values in experiment_data['best_epochs'].items():
+                __add_metric_columns(best_epoch, metric_values, row_data)
+                writer.writerow(row_data)
+
+
+def __add_metric_columns(best_epoch, metric_values, row_data):
+    row_data['epoch'] = best_epoch.split('_')[-1]
+    for metric_name, metric_value in metric_values.items():
+        row_data[metric_name] = metric_value
+
+
+def __get_metrics(d):
+    fourth_level_keys = set()
+    for value in d.values():
+        if isinstance(value, dict):
+            for inner_value in value.values():
+                if isinstance(inner_value, dict):
+                    for deeper_inner_value in inner_value.values():
+                        if isinstance(deeper_inner_value, dict):
+                            fourth_level_keys.update(deeper_inner_value.keys())
+    return list(fourth_level_keys)
