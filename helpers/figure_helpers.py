@@ -54,7 +54,8 @@ def __save_figures(filename, plot_name, generated_plots, path='results/figures')
 def __create_figures_directory(filename, path, plot_name):
     try:
         parent_directory = os.path.splitext(filename)[0].split('/')
-        epochs_directory = f'{parent_directory[-5]}/{parent_directory[-3]}'
+        results_parent_directory_index = parent_directory.index(os.path.splitext(path)[0].split('/')[-4])
+        epochs_directory = f'{parent_directory[results_parent_directory_index+1]}/{parent_directory[__find_epoch_directory_index(parent_directory)]}'
         if plot_name in PlotFactory.get_instance().figures_requires_all_samples:
             dir_path = f'{path}/{epochs_directory}/{plot_name}/'
         else:
@@ -64,3 +65,18 @@ def __create_figures_directory(filename, path, plot_name):
     except FileNotFoundError as file_not_found_error:
         print(f'Could not create the directory in path: {file_not_found_error.filename}. This is probably because the path is too long.')
     return dir_path
+
+def __find_epoch_directory_index(lista_de_cadenas):
+    # Cadena que empieza con "epoch" que buscas
+    subcadena_buscada = "epoch"
+
+    # Inicializar el índice como None (si no se encuentra, retornará None)
+    indice = None
+
+    # Recorrer la lista en sentido inverso
+    for i in range(len(lista_de_cadenas) - 1, -1, -1):
+        if lista_de_cadenas[i].startswith(subcadena_buscada):
+            indice = i
+            break
+
+    return indice
