@@ -1,3 +1,4 @@
+import copy
 import os
 import json
 import csv
@@ -12,15 +13,24 @@ from helpers.similarity_ts_utils import create_similarity_ts_config
 
 def compute_metrics(arguments, header_ts1, ts1, experiment_directories, save_directory_folder):
     print('Computing metrics...')
+    if arguments.window_selection_metric not in arguments.metrics:
+        arguments = copy.deepcopy(arguments)
+        arguments.metrics.append(arguments.window_selection_metric)
     for experiment_directory in experiment_directories:
         metric_results_by_epoch = {}
         epoch_directories = get_epochs_from_experiment(experiment_directory)
-        tqdm_epoch_iterator = tqdm(epoch_directories, total=len(epoch_directories), desc=experiment_directory.split(os.path.sep)[-2].split()[0])
+        tqdm_epoch_iterator = tqdm(epoch_directories, total=len(epoch_directories), desc=__fix_tqdm_description(experiment_directory))
         for epoch_directory in tqdm_epoch_iterator:
             metric_results_by_epoch.update(__get_metrics_results_by_epoch(arguments, header_ts1, ts1, epoch_directory, tqdm_epoch_iterator))
         experiment_selector = BestEpochsSelector(metric_results_by_epoch, 'experiment_dir_name')
         best_experiments = experiment_selector.select_best_epochs(arguments.metrics_to_compare, arguments.n_best)
         __save_selected_experiments(save_directory_folder, best_experiments, arguments.n_best)
+
+
+def __fix_tqdm_description(experiment_directory):
+    if 'model' in experiment_directory:
+        return experiment_directory.split(os.path.sep)[-2]
+    return experiment_directory.split(os.path.sep)[-1]
 
 
 def __get_metrics_results_by_epoch(arguments, header_ts1, ts1, epoch_directory, tqdm_epoch_iterator):

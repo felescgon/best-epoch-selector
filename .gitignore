@@ -400,4 +400,4 @@ FodyWeavers.xsd
 .*
 data/*
 results/*
-ts2/*
+ts2*

@@ -41,7 +41,7 @@ class BestEpochsSelector():
 
     def __get_best_epochs_from_experiment(self, metrics, n_best, experiments):
         experiments_sorted_by_metrics = self.__sort_experiments_by_metrics(metrics, experiments)
-        best_epochs_intersection = self.__get_experiment_intersection(n_best, len(experiments), experiments_sorted_by_metrics)
+        best_epochs_intersection = self.__get_experiment_intersection(n_best, len(experiments), experiments_sorted_by_metrics, metrics)
         return best_epochs_intersection
 
 
@@ -52,7 +52,7 @@ class BestEpochsSelector():
         return sorted_experiments
 
 
-    def __get_experiment_intersection(self, n_best, experiments_length, experiments_sorted_by_metrics):
+    def __get_experiment_intersection(self, n_best, experiments_length, experiments_sorted_by_metrics, metrics):
         left_i = 0
         right_i = experiments_length - 1
         while left_i <= right_i:
@@ -60,6 +60,7 @@ class BestEpochsSelector():
             best_epochs = self.__pick_top_epochs(experiments_sorted_by_metrics, mid_i)
             best_epochs_intersection = list(set.intersection(*best_epochs))
             best_epochs_intersection_data = {'best_epochs': {epoch: 0 for epoch in best_epochs_intersection},
+                                        'metrics_used_to_compare': metrics,
                                         'epochs_used_in_intersection': [list(best_epochs) for best_epochs in best_epochs],
                                         'intersection_epochs_n': mid_i}
             if len(best_epochs_intersection_data['best_epochs']) == n_best:

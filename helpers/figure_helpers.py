@@ -23,10 +23,11 @@ def generate_figures(best_epochs_directories, save_directory_path, arguments):
 def __generate_figures_requires_all_samples(save_directory_path, arguments, header_ts1, ts1, ts2_dict):
     arguments_copy = copy.deepcopy(arguments)
     arguments_copy.figures = [plot for plot in arguments.figures if plot in PlotFactory.get_instance().figures_requires_all_samples]
-    similarity_ts_config = create_similarity_ts_config(arguments_copy, list(ts2_dict.keys()), header_ts1)
-    similarity_ts = SimilarityCopy(ts1, list(ts2_dict.values()), similarity_ts_config)
-    for ts2_name, plot_name, generated_plots in similarity_ts.get_plot_computer():
-        __save_figures(ts2_name, plot_name, generated_plots, save_directory_path)
+    if arguments_copy.figures:
+        similarity_ts_config = create_similarity_ts_config(arguments_copy, list(ts2_dict.keys()), header_ts1)
+        similarity_ts = SimilarityCopy(ts1, list(ts2_dict.values()), similarity_ts_config)
+        for ts2_name, plot_name, generated_plots in similarity_ts.get_plot_computer():
+            __save_figures(ts2_name, plot_name, generated_plots, save_directory_path)
 
 
 def __generate_figures_by_filename(save_directory_path, arguments, header_ts1, ts1, epoch_directory):
@@ -54,7 +55,7 @@ def __save_figures(filename, plot_name, generated_plots, path='results/figures')
 def __create_figures_directory(filename, path, plot_name):
     try:
         parent_directory = os.path.splitext(filename)[0].split('/')
-        results_parent_directory_index = parent_directory.index(os.path.splitext(path)[0].split('/')[-4])
+        results_parent_directory_index = parent_directory.index('/'.join(os.path.splitext(path)[0].split(os.sep)).split('/')[-4])
         epochs_directory = f'{parent_directory[results_parent_directory_index+1]}/{parent_directory[__find_epoch_directory_index(parent_directory)]}'
         if plot_name in PlotFactory.get_instance().figures_requires_all_samples:
             dir_path = f'{path}/{epochs_directory}/{plot_name}/'
@@ -66,17 +67,12 @@ def __create_figures_directory(filename, path, plot_name):
         print(f'Could not create the directory in path: {file_not_found_error.filename}. This is probably because the path is too long.')
     return dir_path
 
-def __find_epoch_directory_index(lista_de_cadenas):
-    # Cadena que empieza con "epoch" que buscas
-    subcadena_buscada = "epoch"
 
-    # Inicializar el índice como None (si no se encuentra, retornará None)
-    indice = None
-
-    # Recorrer la lista en sentido inverso
-    for i in range(len(lista_de_cadenas) - 1, -1, -1):
-        if lista_de_cadenas[i].startswith(subcadena_buscada):
-            indice = i
+def __find_epoch_directory_index(directories):
+    epoch_substring = "epoch"
+    epoch_index = None
+    for i in range(len(directories) - 1, -1, -1):
+        if directories[i].startswith(epoch_substring):
+            epoch_index = i
             break
-
-    return indice
+    return epoch_index
