@@ -16,10 +16,10 @@ def compute_metrics(arguments, header_ts1, ts1, experiment_directories, save_dir
     if arguments.window_selection_metric not in arguments.metrics:
         arguments = copy.deepcopy(arguments)
         arguments.metrics.append(arguments.window_selection_metric)
-    for experiment_directory in experiment_directories:
+    for experiment_directory in tqdm(experiment_directories, total=len(experiment_directories), colour='green'):
         metric_results_by_epoch = {}
         epoch_directories = get_epochs_from_experiment(experiment_directory)
-        tqdm_epoch_iterator = tqdm(epoch_directories, total=len(epoch_directories), desc=__fix_tqdm_description(experiment_directory))
+        tqdm_epoch_iterator = tqdm(epoch_directories, total=len(epoch_directories), desc=__fix_tqdm_description(experiment_directory), leave=False)
         for epoch_directory in tqdm_epoch_iterator:
             metric_results_by_epoch.update(__get_metrics_results_by_epoch(arguments, header_ts1, ts1, epoch_directory, tqdm_epoch_iterator))
         experiment_selector = BestEpochsSelector(metric_results_by_epoch, 'experiment_dir_name')
