@@ -36,18 +36,25 @@ def __fix_tqdm_description(experiment_directory):
 
 def __get_metrics_results_by_epoch(arguments, header_ts1, ts1, epoch_directory, tqdm_epoch_iterator):
     metric_results_by_epoch = {}
-    if not arguments.recompute_metrics and os.path.exists(f'{get_epoch_parent_path(epoch_directory)}/results.json'):
-        with open(f'{get_epoch_parent_path(epoch_directory)}/results.json', 'r', encoding='utf-8') as results:
-            metrics_results = json.load(results)
-            if set(arguments.metrics).issubset(set(metrics_results['Aggregated'].keys())):
-                metric_results_by_epoch[get_epoch_parent_path(epoch_directory)] = metrics_results
-                tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split()[0], status='Skipping...')
-            else:
-                __compute_metrics_by_epoch(arguments, header_ts1, ts1, metric_results_by_epoch, epoch_directory)
-                tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split()[0], status='Computing...')
+    results_path = f'{get_epoch_parent_path(epoch_directory)}/results.json'
+
+    if not arguments.recompute_metrics and os.path.exists(results_path):
+        try:
+            with open(results_path, 'r', encoding='utf-8') as results:
+                metrics_results = json.load(results)
+                if set(arguments.metrics).issubset(set(metrics_results['Aggregated'].keys())):
+                    metric_results_by_epoch[get_epoch_parent_path(epoch_directory)] = metrics_results
+                    tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split()[0], status='Skipping...')
+                else:
+                    __compute_metrics_by_epoch(arguments, header_ts1, ts1, metric_results_by_epoch, epoch_directory)
+                    tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split()[0], status='Computing...')
+        except json.decoder.JSONDecodeError:
+            __compute_metrics_by_epoch(arguments, header_ts1, ts1, metric_results_by_epoch, epoch_directory)
+            tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split()[0], status='Computing...')
     else:
         __compute_metrics_by_epoch(arguments, header_ts1, ts1, metric_results_by_epoch, epoch_directory)
         tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split()[0], status='Computing...')
+
     return metric_results_by_epoch
 
 
