@@ -1,5 +1,6 @@
 import copy
 import os
+import re
 import json
 import csv
 from collections import defaultdict
@@ -20,40 +21,45 @@ def compute_metrics(arguments, header_ts1, ts1, experiment_directories, save_dir
         metric_results_by_epoch = {}
         epoch_directories = get_epochs_from_experiment(experiment_directory)
         sorted_epoch_directories = natsorted(epoch_directories)
-        tqdm_epoch_iterator = tqdm(sorted_epoch_directories, total=len(sorted_epoch_directories), desc=__fix_tqdm_description(experiment_directory), leave=False)
+        tqdm_epoch_iterator = tqdm(sorted_epoch_directories, total=len(sorted_epoch_directories), desc=__get_experiment_name(experiment_directory), leave=False)
         for epoch_directory in tqdm_epoch_iterator:
             metric_results_by_epoch.update(__get_metrics_results_by_epoch(arguments, header_ts1, ts1, epoch_directory, tqdm_epoch_iterator))
+            __save_experiment_to_csv(save_directory_folder, __get_experiment_name(experiment_directory), 
+                                     __get_epoch_name(epoch_directory), metric_results_by_epoch[get_epoch_parent_path(epoch_directory)])
         experiment_selector = BestEpochsSelector(metric_results_by_epoch, 'experiment_dir_name')
         best_experiments = experiment_selector.select_best_epochs(arguments.metrics_to_compare, arguments.n_best)
         __save_selected_experiments(save_directory_folder, best_experiments, arguments.n_best)
 
 
-def __fix_tqdm_description(experiment_directory):
+def __get_experiment_name(experiment_directory):
     if 'model' in experiment_directory:
         return experiment_directory.split(os.path.sep)[-2]
     return experiment_directory.split(os.path.sep)[-1]
 
 
+def __get_epoch_name(epoch_directory):
+    return epoch_directory.split(os.path.sep)[-2].split()[0]
+
+
 def __get_metrics_results_by_epoch(arguments, header_ts1, ts1, epoch_directory, tqdm_epoch_iterator):
     metric_results_by_epoch = {}
     results_path = f'{get_epoch_parent_path(epoch_directory)}/results.json'
-
     if not arguments.recompute_metrics and os.path.exists(results_path):
         try:
             with open(results_path, 'r', encoding='utf-8') as results:
                 metrics_results = json.load(results)
                 if set(arguments.metrics).issubset(set(metrics_results['Aggregated'].keys())):
                     metric_results_by_epoch[get_epoch_parent_path(epoch_directory)] = metrics_results
-                    tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split()[0], status='Skipping...')
+                    tqdm_epoch_iterator.set_postfix(epoch=__get_epoch_name(epoch_directory), status='Skipping...')
                 else:
                     __compute_metrics_by_epoch(arguments, header_ts1, ts1, metric_results_by_epoch, epoch_directory)
-                    tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split()[0], status='Computing...')
+                    tqdm_epoch_iterator.set_postfix(epoch=__get_epoch_name(epoch_directory), status='Computing...')
         except json.decoder.JSONDecodeError:
             __compute_metrics_by_epoch(arguments, header_ts1, ts1, metric_results_by_epoch, epoch_directory)
-            tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split()[0], status='Computing...')
+            tqdm_epoch_iterator.set_postfix(epoch=__get_epoch_name(epoch_directory), status='Computing...')
     else:
         __compute_metrics_by_epoch(arguments, header_ts1, ts1, metric_results_by_epoch, epoch_directory)
-        tqdm_epoch_iterator.set_postfix(epoch=epoch_directory.split(os.path.sep)[-2].split()[0], status='Computing...')
+        tqdm_epoch_iterator.set_postfix(epoch=__get_epoch_name(epoch_directory), status='Computing...')
 
     return metric_results_by_epoch
 
@@ -104,18 +110,42 @@ def __save_metrics(computed_metrics, path):
         print(f'Could not store the metrics in path: {file_not_found_error.filename}. This is probably because the path is too long.')
 
 
+def __save_experiment_to_csv(save_directory_path, experiment_name, epoch_name, epoch_data_dict):
+    try:
+        save_file_path_csv = f'{save_directory_path}/every_experiment.csv'
+        does_file_exist = os.path.exists(save_file_path_csv)
+        if not os.path.exists(f'{save_directory_path}'):
+            os.makedirs(f'{save_directory_path}', exist_ok=True)
+        with open(save_file_path_csv, 'a', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            row_data =  parse_file_name_to_dict(experiment_name)
+            row_data.update({'epoch': int(epoch_name.split('_')[-1]), **epoch_data_dict['Aggregated']})
+            if not does_file_exist:
+                header = row_data.keys()
+                writer.writerow(header)
+            writer.writerow(row_data.values())
+    except FileNotFoundError as file_not_found_error:
+        print(f'Could not store the best experiments in path: {file_not_found_error.filename}. This is probably because the path is too long.')
+
+
+def parse_file_name_to_dict(input_string):
+    components = re.findall(r'([a-zA-Z_]+)[-_](\d+(?:\.\d+)?)', input_string)
+    data_dict = {}
+    for key, value in components:
+        data_dict[key] = float(value) if '.' in value else int(value)
+    return data_dict
+
+
 def __save_selected_experiments(save_directory_path, experiments, n_best):
     try:
         save_file_path_json = f'{save_directory_path}/{n_best}_epochs_by_experiment.json'
         save_file_path_csv = f'{save_directory_path}/{n_best}_epochs_by_experiment.csv'
         experiments_to_save = json.dumps(experiments, indent=4, ensure_ascii=False).encode('utf-8')
-        if os.path.exists(f'{save_directory_path}'):
+        if os.path.exists(save_file_path_json):
             experiments_to_save = __load_sorted_experiments_from_file(experiments, save_file_path_json)
-        else:
-            os.makedirs(f'{save_directory_path}', exist_ok=True)
         with open(save_file_path_json, 'w', encoding='utf-8') as file:
             file.write(experiments_to_save.decode('utf-8'))
-        __write_experiments_to_csv(save_file_path_csv, save_file_path_json)
+        __write_selected_experiments_to_csv(save_file_path_csv, save_file_path_json)
     except FileNotFoundError as file_not_found_error:
         print(f'Could not store the best experiments in path: {file_not_found_error.filename}. This is probably because the path is too long.')
 
@@ -132,7 +162,7 @@ def __load_sorted_experiments_from_file(experiments, save_file_path):
     return experiments_to_save
 
 
-def __write_experiments_to_csv(file_path, json_file_path):
+def __write_selected_experiments_to_csv(file_path, json_file_path):
     with open(json_file_path, 'r', newline='', encoding='utf-8') as json_file:
         experiments = json.load(json_file)
     with open(file_path, 'w', newline='', encoding='utf-8') as csv_file:
