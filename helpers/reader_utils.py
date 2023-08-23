@@ -2,6 +2,7 @@ import os
 import csv
 import json
 import numpy as np
+import pandas as pd
 from natsort import natsorted
 
 
@@ -112,3 +113,7 @@ def load_best_experiments_file(save_directory_path, n_best):
     with open(f'{save_directory_path}/{n_best}_epochs_by_experiment.json', 'r', encoding='utf-8') as best_experiments_file:
         best_experiments = json.load(best_experiments_file)
     return best_experiments
+
+
+def get_every_experiment_df(save_directory_path, features, dtypes):
+    return pd.read_csv(f'{save_directory_path}/every_experiment.csv', usecols=features, dtype=dtypes)

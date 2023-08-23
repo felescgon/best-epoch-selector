@@ -4,6 +4,7 @@ from datetime import datetime
 from datacentertracesdatasets import loadtraces
 from similarity_ts.metrics.metric_factory import MetricFactory
 from similarity_ts.plots.plot_factory import PlotFactory
+from helpers.feature_analysis_helpers import generate_features_analysis
 from helpers.figure_helpers import generate_figures
 from helpers.metric_helpers import compute_metrics
 from helpers.reader_utils import get_best_epochs_directories, get_ts2s_directories, load_best_experiments_file
@@ -42,6 +43,13 @@ def main():
         nargs='+',
         help='<Optional> Include figure names to be generated as a list separated by spaces.',
         choices=available_figures,
+        required=False,
+    )
+    parser.add_argument(
+        '-feat',
+        '--features_to_analyse',
+        nargs='+',
+        help='<Optional> Include the features to be analysed.',
         required=False,
     )
     parser.add_argument(
@@ -109,6 +117,8 @@ def __main_script(arguments):
     ts1 = loadtraces.get_trace(trace_name=arguments.trace_name, trace_type='machine_usage', stride_seconds=300, format='ndarray')
     experiment_directories = get_ts2s_directories(arguments.time_series_2_path)
     compute_metrics(arguments, header_ts1, ts1, experiment_directories, save_directory_folder)
+    if arguments.features_to_analyse:
+        generate_features_analysis(arguments, save_directory_folder)
     best_experiments = load_best_experiments_file(save_directory_folder, arguments.n_best)
     if arguments.figures:
         best_epochs_directories = get_best_epochs_directories(best_experiments)
