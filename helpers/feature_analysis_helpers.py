@@ -23,6 +23,7 @@ def generate_features_analysis(arguments, save_directory_folder):
     save_regression_plots(experiments_df, separate_features, save_directory_folder)
     save_histogram_plots(experiments_df, separate_features, save_directory_folder)
     save_scatter_by_category_plots(experiments_df, separate_features, save_directory_folder)
+    save_category_plots(experiments_df, separate_features, save_directory_folder)
 
 
 def get_dtypes(features_to_analyse):
@@ -72,7 +73,7 @@ def save_correlation_heatmap(experiments_df, save_directory_folder):
 
 
 def save_regression_plots(experiments_df, separate_features, save_directory_folder):
-    plot_arguments = get_regression_plot_arguments(experiments_df, separate_features)
+    plot_arguments = get_regression_plot_arguments(separate_features)
     os.makedirs(f'{save_directory_folder}/regression', exist_ok=True)
     for axes, hue in zip(plot_arguments['axes'], plot_arguments['hue']):
         g = sns.FacetGrid(experiments_df, col=hue, col_wrap=min(experiments_df[hue].nunique(), 3), height=4)
@@ -105,3 +106,14 @@ def save_scatter_by_category_plots(experiments_df, separate_features, save_direc
         os.makedirs(f'{save_directory_folder}/scatter_by_category/{hue[0]}_vs_{hue[1]}', exist_ok=True)
         plt.savefig(f'{save_directory_folder}/scatter_by_category/{hue[0]}_vs_{hue[1]}/y_{metric}.pdf', format='pdf', bbox_inches='tight')
         plt.close()
+
+
+def save_category_plots(experiments_df, separate_features, save_directory_folder):
+    plot_arguments = get_scatter_by_category_plot_arguments(separate_features)
+    for kind in ["boxen","violin","bar"]:
+        os.makedirs(f'{save_directory_folder}/{kind}', exist_ok=True)
+        for hue, metric in zip(plot_arguments['hue'], plot_arguments['metric']):
+            sns.catplot(x=hue[0], y=metric, data=experiments_df, kind=kind, hue=hue[1], col=hue[1])
+            os.makedirs(f'{save_directory_folder}/{kind}/{hue[0]}_vs_{hue[1]}', exist_ok=True)
+            plt.savefig(f'{save_directory_folder}/{kind}/{hue[0]}_vs_{hue[1]}/y_{metric}.pdf', format='pdf', bbox_inches='tight')
+            plt.close()
