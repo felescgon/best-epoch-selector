@@ -20,10 +20,12 @@ def generate_features_analysis(arguments, save_directory_folder):
     separate_features = get_separate_features_dict(arguments.features_to_analyse, experiments_df)
     assert len(separate_features['metrics']) > 1 and len(separate_features['hyperparameters']) > 0, 'Feature analysis requires at least 2 metrics and 1 hyperparameter.'
     save_correlation_heatmap(experiments_df, save_directory_folder)
+    save_correlation_dendogram(experiments_df, save_directory_folder)
     save_regression_plots(experiments_df, separate_features, save_directory_folder)
     save_histogram_plots(experiments_df, separate_features, save_directory_folder)
     save_scatter_by_category_plots(experiments_df, separate_features, save_directory_folder)
     save_category_plots(experiments_df, separate_features, save_directory_folder)
+    save_mutual_information(experiments_df, separate_features, save_directory_folder)
 
 
 def get_dtypes(features_to_analyse):
@@ -63,12 +65,26 @@ def get_scatter_by_category_plot_arguments(separate_features):
 
 
 def save_correlation_heatmap(experiments_df, save_directory_folder):
+    experiments_df = experiments_df.loc[:, experiments_df.nunique() > 1]
+    assert not experiments_df.empty, "No valid data left after dropping columns with no variance."
     plt.figure(figsize=(16, 6))
     mask = np.triu(np.ones_like(experiments_df.corr(), dtype=bool))
     heatmap = sns.heatmap(experiments_df.corr(), mask=mask, vmin=-1, vmax=1, annot=True)
     heatmap.set_title('Triangle Correlation Heatmap', fontdict={'fontsize':18}, pad=16)
     os.makedirs(f'{save_directory_folder}/correlation', exist_ok=True)
     plt.savefig(f'{save_directory_folder}/correlation/heatmap.pdf', format='pdf', bbox_inches='tight')
+    plt.close()
+
+
+def save_correlation_dendogram(experiments_df, save_directory_folder):
+    experiments_df = experiments_df.loc[:, experiments_df.nunique() > 1]
+    assert not experiments_df.empty, "No valid data left after dropping columns with no variance."
+    numerical_cols = experiments_df.select_dtypes("float").columns
+    corrmat = experiments_df[numerical_cols].corr(method='spearman')
+    cg = sns.clustermap(corrmat, linewidths=0.1, annot=True)
+    plt.setp(cg.ax_heatmap.yaxis.get_majorticklabels(), rotation=0)
+    os.makedirs(f'{save_directory_folder}/correlation', exist_ok=True)
+    plt.savefig(f'{save_directory_folder}/correlation/dendogram.pdf', format='pdf', bbox_inches='tight')
     plt.close()
 
 
