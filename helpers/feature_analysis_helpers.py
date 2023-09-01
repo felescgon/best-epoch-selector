@@ -1,9 +1,12 @@
+import json
 import os
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 from itertools import permutations, product
 from similarity_ts.metrics.metric_factory import MetricFactory
+from sklearn.feature_selection import mutual_info_regression
 from helpers.reader_utils import get_every_experiment_df
 import warnings
 
@@ -133,3 +136,27 @@ def save_category_plots(experiments_df, separate_features, save_directory_folder
             os.makedirs(f'{save_directory_folder}/{kind}/{hue[0]}_vs_{hue[1]}', exist_ok=True)
             plt.savefig(f'{save_directory_folder}/{kind}/{hue[0]}_vs_{hue[1]}/y_{metric}.pdf', format='pdf', bbox_inches='tight')
             plt.close()
+
+
+def make_mi_scores(experiments_df, target_metric, discrete_features):
+        mi_scores = mutual_info_regression(experiments_df, target_metric, discrete_features=discrete_features)
+        mi_scores = pd.Series(mi_scores, name="MI Scores", index=experiments_df.columns)
+        mi_scores = mi_scores.sort_values(ascending=False)
+        return mi_scores.to_dict()
+
+
+def save_mutual_information(experiments_df, separate_features, save_directory_folder):
+    experiments_df_copy = experiments_df.copy()
+    mutual_information_by_metric = {}
+    for metric in separate_features['metrics']:
+        experiments_df_wo_metric = experiments_df_copy.copy()
+        target_metric = experiments_df_wo_metric.pop(metric)
+        for feature in experiments_df_wo_metric.select_dtypes("category"):
+            experiments_df_wo_metric[feature],_ = experiments_df_wo_metric[feature].factorize()
+        discrete_features = experiments_df_wo_metric.dtypes == int
+        mi_scores = make_mi_scores(experiments_df_wo_metric, target_metric, discrete_features)
+        mutual_information_by_metric[metric] = mi_scores
+    os.makedirs(f'{save_directory_folder}/mutual_information', exist_ok=True)
+    mutual_information_by_metric_json = json.dumps(mutual_information_by_metric, indent=4, ensure_ascii=False).encode('utf-8')
+    with open(f'{save_directory_folder}/mutual_information/mutual_information.json', 'w') as f:
+        f.write(mutual_information_by_metric_json.decode('utf-8'))
