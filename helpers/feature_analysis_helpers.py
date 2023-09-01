@@ -146,17 +146,16 @@ def make_mi_scores(experiments_df, target_metric, discrete_features):
 
 
 def save_mutual_information(experiments_df, separate_features, save_directory_folder):
-    experiments_df_copy = experiments_df.copy()
     mutual_information_by_metric = {}
     for metric in separate_features['metrics']:
-        experiments_df_wo_metric = experiments_df_copy.copy()
+        experiments_df_wo_metric = experiments_df.copy()
         target_metric = experiments_df_wo_metric.pop(metric)
         for feature in experiments_df_wo_metric.select_dtypes("category"):
             experiments_df_wo_metric[feature],_ = experiments_df_wo_metric[feature].factorize()
         discrete_features = experiments_df_wo_metric.dtypes == int
         mi_scores = make_mi_scores(experiments_df_wo_metric, target_metric, discrete_features)
         mutual_information_by_metric[metric] = mi_scores
-    os.makedirs(f'{save_directory_folder}/mutual_information', exist_ok=True)
-    mutual_information_by_metric_json = json.dumps(mutual_information_by_metric, indent=4, ensure_ascii=False).encode('utf-8')
-    with open(f'{save_directory_folder}/mutual_information/mutual_information.json', 'w') as f:
-        f.write(mutual_information_by_metric_json.decode('utf-8'))
+    mutual_info_folder = f'{save_directory_folder}/mutual_information'
+    os.makedirs(mutual_info_folder, exist_ok=True)
+    with open(f'{mutual_info_folder}/mutual_information.json', 'w') as f:
+        json.dump(mutual_information_by_metric, f, indent=4, ensure_ascii=False)
