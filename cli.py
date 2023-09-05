@@ -119,8 +119,8 @@ def __main_script(arguments):
     compute_metrics(arguments, header_ts1, ts1, experiment_directories, save_directory_folder)
     if arguments.features_to_analyse:
         generate_features_analysis(arguments, save_directory_folder)
-    best_experiments = load_best_experiments_file(save_directory_folder, arguments.n_best)
     if arguments.figures:
+        best_experiments = load_best_experiments_file(save_directory_folder, arguments.n_best)
         best_epochs_directories = get_best_epochs_directories(best_experiments)
         generate_figures(best_epochs_directories, save_directory_folder, arguments)
 
