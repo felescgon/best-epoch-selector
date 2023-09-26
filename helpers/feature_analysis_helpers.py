@@ -75,7 +75,12 @@ def save_correlation_heatmap(experiments_df, save_directory_folder):
     heatmap = sns.heatmap(experiments_df.corr(), mask=mask, vmin=-1, vmax=1, annot=True)
     heatmap.set_title('Triangle Correlation Heatmap', fontdict={'fontsize':18}, pad=16)
     os.makedirs(f'{save_directory_folder}/correlation', exist_ok=True)
-    plt.savefig(f'{save_directory_folder}/correlation/heatmap.pdf', format='pdf', bbox_inches='tight')
+    plt.savefig(f'{save_directory_folder}/correlation/triangle_heatmap.pdf', format='pdf', bbox_inches='tight')
+    plt.close()
+    plt.figure(figsize=(16, 6))
+    heatmap = sns.heatmap(experiments_df.corr(), vmin=-1, vmax=1, annot=True)
+    heatmap.set_title('Correlation Heatmap', fontdict={'fontsize':18}, pad=16)
+    plt.savefig(f'{save_directory_folder}/correlation/matrix_heatmap.pdf', format='pdf', bbox_inches='tight')
     plt.close()
 
 
