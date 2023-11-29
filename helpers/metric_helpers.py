@@ -50,6 +50,7 @@ def __get_metrics_results_by_epoch(arguments, header_ts1, ts1, epoch_directory, 
                 metrics_results = json.load(results)
                 if set(arguments.metrics).issubset(set(metrics_results['Aggregated'].keys())):
                     metric_results_by_epoch[get_epoch_parent_path(epoch_directory)] = metrics_results
+                    __update_metrics_path(metrics_results, epoch_directory)
                     tqdm_epoch_iterator.set_postfix(epoch=__get_epoch_name(epoch_directory), status='Skipping...')
                 else:
                     __compute_metrics_by_epoch(arguments, header_ts1, ts1, metric_results_by_epoch, epoch_directory)
@@ -106,6 +107,24 @@ def __save_metrics(computed_metrics, path):
         os.makedirs(f'{path}', exist_ok=True)
         with open(f'{path}/results.json', 'w', encoding='utf-8') as file:
             file.write(computed_metrics.decode('utf-8'))
+    except FileNotFoundError as file_not_found_error:
+        print(f'Could not store the metrics in path: {file_not_found_error.filename}. This is probably because the path is too long.')
+
+
+def __update_metrics_path(computed_metrics, path):
+    path_components = os.path.normpath(path).split(os.sep)
+    path = os.sep.join(path_components).replace(os.path.sep, '/')
+    results_save_path = '/'.join(path.split('/')[:-1])
+    new_individual_metrics = {}
+    for sample_path, sample_metrics in computed_metrics['Individual'].items():
+        sample_name = sample_path.split('/')[-1]
+        new_sample_path = f'{path}/{sample_name}'
+        new_individual_metrics[new_sample_path] = sample_metrics
+    computed_metrics.pop('Individual')
+    computed_metrics['Individual'] = new_individual_metrics
+    try:
+        with open(f'{results_save_path}/results.json', 'w', encoding='utf-8') as file:
+            file.write(json.dumps(computed_metrics, indent=4, ensure_ascii=False))
     except FileNotFoundError as file_not_found_error:
         print(f'Could not store the metrics in path: {file_not_found_error.filename}. This is probably because the path is too long.')
 
